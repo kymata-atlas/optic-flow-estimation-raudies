@@ -22,7 +22,7 @@ close all
 % more directions, etc. To avoid long runtimes and for educational reasons 
 % I kept the scripts rather simple. Thus, results give only a guideline as
 % to how good these methods are.
-algoIndex = 2; % Select the algorithm to run with this index.
+algoIndex = 4; % Select the algorithm to run with this index.
 %                   Authors         frames        no
 AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'Farnebaeck',    'all'}, ... % 2
@@ -36,7 +36,7 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'UrasEtAl',      'all'}};    % 10
 
 % Load the image sequence.
-ImgSeq        = readImgSeq('./TranslationSphere/ImgFrame%05d.pgm',0,21);
+ImgSeq        = load_our_stim();
 maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
     ImgSeq = ImgSeq(:,:,11:12);
@@ -45,12 +45,12 @@ end
 % Run the selected algorithm by temporarily adding the folder of the
 % algorithm to the path.
 algoPath = ['./',AlgoNameFrames{algoIndex}{1},'/'];
-addpath(algoPath); [Dx Dy] = estimateOpticFlow2D(ImgSeq); rmpath(algoPath);
+addpath(algoPath); [Dx, Dy] = estimateOpticFlow2D(ImgSeq); rmpath(algoPath);
 
 % Display the estimated optic flow.
 h       = size(ImgSeq,1);
 w       = size(ImgSeq,2);
-[Y X]   = ndgrid(1:h, 1:w); % pixel coordinates.
+[Y, X]   = ndgrid(1:h, 1:w); % pixel coordinates.
 sample  = 8;
 IndexX  = 1:sample:w;
 IndexY  = 1:sample:h;
@@ -62,5 +62,5 @@ figure('Position',[50 50 600 600]);
 quiver(X(IndexY,IndexX),      Y(IndexY,IndexX),...
        Dx(IndexY,IndexX)*len, Dy(IndexY,IndexX)*len,0,'-k');
 axis equal ij; axis([-10 w+10 -10 h+10]);
-title(sprintf(['Translation toward a sphere, sampling %d times of ',...
+title(sprintf(['Our stimulus, sampling %d times of ',...
     '%d x %d pixels.\nAlgorithm: %s'], sample,h,w,AlgoNameFrames{algoIndex}{1}));
