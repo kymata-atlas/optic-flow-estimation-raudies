@@ -1,4 +1,4 @@
-function ImageSeq = stream_our_stim(starting_at, n_frames)
+function ImageSeq = stream_our_stim(starting_at, n_frames, lab)
 
     % Gets a block of stimulus W x H x `n_frames`, with the first frame
     % being `starting_at`.
@@ -11,6 +11,7 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
     persistent f; % Number of frames in the data block
     persistent current_first_frame; % The index of the first frame
     persistent data_block;  % The w, h, t block of image data
+    persistent use_lab;
     
     %% Initialise and validate persistent state
     
@@ -21,7 +22,7 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
     if isempty(f)
         f = n_frames;
     else
-        assert(f == n_frames);
+        assert(n_frames == f);
     end
     
     if isempty(current_first_frame)
@@ -30,6 +31,13 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
         assert(starting_at == current_first_frame + 1);
         current_first_frame = starting_at;
     end
+    
+    if isempty(use_lab)
+        use_lab = lab;
+    else
+        assert(lab == use_lab);
+    end
+        
     
     
     %% Non persistent state
@@ -48,15 +56,7 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
         data_block = zeros(w, h, f);
         frame_count = 1;
         for overall_frame = current_first_frame:current_last_frame
-            [trial, frame] = get_trial_and_frame_from_overall_frame(overall_frame);
-            fprintf('Loading image for trial %03d/%03d, frame %02d/%02d\n', trial, total_trials, frame, total_frames);
-
-            image_path = filename_from_trial_and_frame(trial, frame);
-            frame_image = single(imread(image_path));
-            lab_image = rgb2lab(frame_image);
-            luminocity = single(lab_image(:, :, 1));
-            data_block(:, :, frame_count) = luminocity;
-
+            data_block(:, :, frame_count) = load_frame(overall_frame, use_lab);
             frame_count = frame_count + 1;
         end%for frame
         
@@ -67,14 +67,8 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
         data_block(:,:,1:end-1) = data_block(:,:,2:end);
         
         % Load a new last frame
-        [trial, frame] = get_trial_and_frame_from_overall_frame(current_last_frame);
-        fprintf('Loading image for trial %03d/%03d, frame %02d/%02d\n', trial, total_trials, frame, total_frames);
+        data_block(:,:,end) = load_frame(current_last_frame, use_lab);
         
-        image_path = filename_from_trial_and_frame(trial, frame);
-        frame_image = single(imread(image_path));
-        lab_image = rgb2lab(frame_image);
-        luminocity = single(lab_image(:, :, 1));
-        data_block(:,:,end) = luminocity;
     end%if datablock empty
     
     %% Return the current data block
@@ -83,6 +77,25 @@ function ImageSeq = stream_our_stim(starting_at, n_frames)
 end%function
 
 %% LOCAL FUNCTIONS
+
+function frame_image = load_frame(frame_id, use_lab)
+    total_frames = 60;
+    total_trials = 400;
+
+    [trial, frame] = get_trial_and_frame_from_overall_frame(frame_id);
+    fprintf('Loading image for trial %03d/%03d, frame %02d/%02d\n', trial, total_trials, frame, total_frames);
+
+    image_path = filename_from_trial_and_frame(trial, frame);
+    frame_image = imread(image_path);
+    if use_lab
+        lab_image = rgb2lab(frame_image);
+        % Extract lumanance from LAB image
+        frame_image = lab_image(:, :, 1);
+    else
+        frame_image = rgb2gray(frame_image);
+    end
+
+end
 
 function [trial_i, frame_i] = get_trial_and_frame_from_overall_frame(overall_frame)
     total_frames = 60;
