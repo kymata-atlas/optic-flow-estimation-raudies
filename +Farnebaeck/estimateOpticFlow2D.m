@@ -1,4 +1,4 @@
-function [Dx Dy D] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, D] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -31,6 +31,8 @@ function [Dx Dy D] = estimateOpticFlow2D(ImgSeq, opt)
 %
 %   Copyright (C) 2013  Florian Raudies, 01/04/2013, Boston University.
 %   License, GNU GPL, free software, without any warranty.
+
+import Farnebaeck.*
 
 % Get size parameters.
 yNum = size(ImgSeq,1);
@@ -76,7 +78,7 @@ T = removeIsotropic(squeeze(T));
 % parameters. The constraint matrix is symmetric and we define each unique 
 % entry once.
 Q           = zeros(yNum, xNum, 25);
-[Y X]       = ndgrid( 1:yNum, 1:xNum);
+[Y, X]       = ndgrid( 1:yNum, 1:xNum);
 % Diagonal entries.
 Q(:,:,1)    = X.*X.*T(:,:,1,1);
 Q(:,:,2)    = Y.*Y.*T(:,:,1,1);

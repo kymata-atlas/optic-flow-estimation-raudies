@@ -36,7 +36,7 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'UrasEtAl',      'all'}};    % 10
               
 contour = [];
-for first_frame = 1:100
+for first_frame = 1:60
 
 % Load the image sequence.
 ImgSeq        = stream_our_stim(first_frame, 15, false);
@@ -46,7 +46,10 @@ maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 %     ImgSeq = ImgSeq(:,:,11:12);
 % end
 
-[Dx, Dy] = AdelsonBergen.estimateOpticFlow2D(ImgSeq);
+warning_state = warning;
+warning('off', 'all');
+[Dx, Dy, ~] = Farnebaeck.estimateOpticFlow2D(ImgSeq);
+warning(warning_state);
 
 % Contour captures horizontal motion energy
 contour = [contour, mean(Dx(:))];
