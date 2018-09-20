@@ -17,7 +17,7 @@ function ImgSeq = readImgSeq(filePattern, firstFrame, lastFrame)
 %   License, GNU GPL, free software, without any warranty.
 
 fNum        = lastFrame - firstFrame + 1; % number of frames
-[yNum xNum] = size(imread(sprintf(filePattern,0))); % get dimensions
+[yNum, xNum] = size(imread(sprintf(filePattern,0))); % get dimensions
 ImgSeq      = zeros(yNum,xNum,fNum);
 for iFrame = 1:fNum,
     ImgSeq(:,:,iFrame) = double(imread(...

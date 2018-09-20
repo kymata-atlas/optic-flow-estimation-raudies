@@ -1,4 +1,4 @@
-function [Dx Dy L] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -54,7 +54,7 @@ sigmaV  = opt.sigmaV;
 VelVecX = opt.VelVecX;
 VelVecY = opt.VelVecY;
 SpaceOri= (0:oNum-1)*pi/oNum;
-[Vy Vx] = ndgrid(VelVecY,VelVecX);
+[Vy, Vx] = ndgrid(VelVecY,VelVecX);
 yNum    = size(ImgSeq,1);
 xNum    = size(ImgSeq,2);
 ftNum   = length(TempFrq);

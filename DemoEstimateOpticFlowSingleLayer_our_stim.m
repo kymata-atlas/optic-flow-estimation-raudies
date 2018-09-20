@@ -42,10 +42,7 @@ if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
     ImgSeq = ImgSeq(:,:,11:12);
 end
 
-% Run the selected algorithm by temporarily adding the folder of the
-% algorithm to the path.
-algoPath = ['./',AlgoNameFrames{algoIndex}{1},'/'];
-addpath(algoPath); [Dx, Dy] = estimateOpticFlow2D(ImgSeq); rmpath(algoPath);
+[Dx, Dy] = AdelsonBergen.estimateOpticFlow2D(ImgSeq);
 
 % Display the estimated optic flow.
 h       = size(ImgSeq,1);

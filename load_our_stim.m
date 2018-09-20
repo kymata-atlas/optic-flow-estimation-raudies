@@ -12,9 +12,9 @@ function ImageSeq = load_our_stim()
     for trial = 1:total_trials
         for frame = 1:total_frames
             image_path = filename_from_trial_and_frame(trial, frame);
-            frame_image = imread(image_path);
+            frame_image = single(imread(image_path));
             lab_image = rgb2lab(frame_image);
-            luminocity = lab_image(:, :, 1);
+            luminocity = single(lab_image(:, :, 1));
             ImageSeq(:, :, frame_count) = luminocity;
             
         frame_count = frame_count + 1;

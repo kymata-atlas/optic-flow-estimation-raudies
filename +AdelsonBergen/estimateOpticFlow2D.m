@@ -1,4 +1,4 @@
-function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
