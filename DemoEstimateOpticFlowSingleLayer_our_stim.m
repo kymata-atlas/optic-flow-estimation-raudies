@@ -36,7 +36,7 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'UrasEtAl',      'all'}};    % 10
 
 % Load the image sequence.
-ImgSeq        = load_our_stim();
+ImgSeq        = load_our_stim([1, 15]);
 maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
     ImgSeq = ImgSeq(:,:,11:12);
