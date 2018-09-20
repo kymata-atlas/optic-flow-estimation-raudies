@@ -34,30 +34,39 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'Nagel',         'all'}, ... % 8
                   {'OtteNagel',     'all'}, ... % 9
                   {'UrasEtAl',      'all'}};    % 10
+              
+contour = [];
+for first_frame = 1:100
 
 % Load the image sequence.
-ImgSeq        = load_our_stim([1, 15]);
+ImgSeq        = stream_our_stim(first_frame, 15);
 maxSpeed      = 3; % Set to a reasonable value, might not be correct.
-if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
-    ImgSeq = ImgSeq(:,:,11:12);
-end
+
+% if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
+%     ImgSeq = ImgSeq(:,:,11:12);
+% end
 
 [Dx, Dy] = AdelsonBergen.estimateOpticFlow2D(ImgSeq);
 
-% Display the estimated optic flow.
-h       = size(ImgSeq,1);
-w       = size(ImgSeq,2);
-[Y, X]   = ndgrid(1:h, 1:w); % pixel coordinates.
-sample  = 8;
-IndexX  = 1:sample:w;
-IndexY  = 1:sample:h;
-% For the display the flow is scaled by division with its maximum speed and
-% multiplication with the sampling factor.
-len     = sample/maxSpeed;
+% Contour captures horizontal motion energy
+contour = [contour, mean(Dx(:))];
 
-figure('Position',[50 50 600 600]);
-quiver(X(IndexY,IndexX),      Y(IndexY,IndexX),...
-       Dx(IndexY,IndexX)*len, Dy(IndexY,IndexX)*len,0,'-k');
-axis equal ij; axis([-10 w+10 -10 h+10]);
-title(sprintf(['Our stimulus, sampling %d times of ',...
-    '%d x %d pixels.\nAlgorithm: %s'], sample,h,w,AlgoNameFrames{algoIndex}{1}));
+% Display the estimated optic flow.
+% h       = size(ImgSeq,1);
+% w       = size(ImgSeq,2);
+% [Y, X]   = ndgrid(1:h, 1:w); % pixel coordinates.
+% sample  = 8;
+% IndexX  = 1:sample:w;
+% IndexY  = 1:sample:h;
+% % For the display the flow is scaled by division with its maximum speed and
+% % multiplication with the sampling factor.
+% len     = sample/maxSpeed;
+% 
+% figure('Position',[50 50 600 600]);
+% quiver(X(IndexY,IndexX),      Y(IndexY,IndexX),...
+%        Dx(IndexY,IndexX)*len, Dy(IndexY,IndexX)*len,0,'-k');
+% axis equal ij; axis([-10 w+10 -10 h+10]);
+% title(sprintf(['Our stimulus, sampling %d times of ',...
+%     '%d x %d pixels.\nAlgorithm: %s'], sample,h,w,AlgoNameFrames{algoIndex}{1}));
+
+end
