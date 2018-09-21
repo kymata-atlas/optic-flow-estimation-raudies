@@ -1,4 +1,4 @@
-function ImageSeq = stream_our_stim(starting_at, n_frames, lab)
+function ImageSeq = stream_our_stim(starting_at, n_frames, image_mode)
 
     % Gets a block of stimulus W x H x `n_frames`, with the first frame
     % being `starting_at`.
@@ -33,9 +33,16 @@ function ImageSeq = stream_our_stim(starting_at, n_frames, lab)
     end
     
     if isempty(use_lab)
-        use_lab = lab;
+        % We only validate input the first time
+        if strcmpi(image_mode, 'lab')
+            use_lab = true;
+        elseif strcmpi(image_mode, 'greyscale')
+            use_lab = false;
+        else
+            error('Use ''lab'' or ''greyscale'' only.');
+        end
     else
-        assert(lab == use_lab);
+        assert(use_lab == strcmpi(image_mode, 'lab'));
     end
         
     

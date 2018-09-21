@@ -39,8 +39,8 @@ contour = [];
 for first_frame = 1:60
 
 % Load the image sequence.
-ImgSeq        = stream_our_stim(first_frame, 15, false);
-maxSpeed      = 3; % Set to a reasonable value, might not be correct.
+ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
+maxSpeed      = 10; % Set to a reasonable value, might not be correct.
 
 % if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
 %     ImgSeq = ImgSeq(:,:,11:12);
