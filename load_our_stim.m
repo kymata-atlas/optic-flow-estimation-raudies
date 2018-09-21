@@ -27,9 +27,9 @@ function ImageSeq = load_our_stim(first_last_frame)
         fprintf('Loading image for trial %03d/%03d, frame %02d/%02d\n', trial, total_trials, frame, total_frames);
         
         image_path = filename_from_trial_and_frame(trial, frame);
-        frame_image = single(imread(image_path));
+        frame_image = imread(image_path);
         lab_image = rgb2lab(frame_image);
-        luminocity = single(lab_image(:, :, 1));
+        luminocity = lab_image(:, :, 1);
         ImageSeq(:, :, frame_count) = luminocity;
             
         frame_count = frame_count + 1;
