@@ -60,10 +60,12 @@ function ImageSeq = stream_our_stim(starting_at, n_frames, image_mode)
     
     % The first time it's called, we fill up the block
     if isempty(data_block)
-        data_block = zeros(w, h, f);
-        frame_count = 1;
-        for overall_frame = current_first_frame:current_last_frame
-            data_block(:, :, frame_count) = load_frame(overall_frame, use_lab);
+        % Load first frame
+        data_block = load_frame(current_first_frame, use_lab);
+        % Load remaining frames
+        frame_count = 2;
+        for overall_frame = current_first_frame+1:current_last_frame
+            data_block = cat(3, data_block, load_frame(overall_frame, use_lab));
             frame_count = frame_count + 1;
         end%for frame
         

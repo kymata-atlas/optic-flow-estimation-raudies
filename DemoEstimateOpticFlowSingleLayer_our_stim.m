@@ -22,7 +22,7 @@ close all
 % more directions, etc. To avoid long runtimes and for educational reasons 
 % I kept the scripts rather simple. Thus, results give only a guideline as
 % to how good these methods are.
-algoIndex = 4; % Select the algorithm to run with this index.
+algoIndex = 1; % Select the algorithm to run with this index.
 %                   Authors         frames        no
 AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'Farnebaeck',    'all'}, ... % 2
@@ -39,8 +39,8 @@ contour = [];
 for first_frame = 1:60
 
 % Load the image sequence.
-ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
-maxSpeed      = 10; % Set to a reasonable value, might not be correct.
+ImgSeq        = stream_our_stim(first_frame, 15, 'lab');
+maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 
 % if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
 %     ImgSeq = ImgSeq(:,:,11:12);
@@ -48,7 +48,7 @@ maxSpeed      = 10; % Set to a reasonable value, might not be correct.
 
 warning_state = warning;
 warning('off', 'all');
-[Dx, Dy, ~] = Farnebaeck.estimateOpticFlow2D(ImgSeq);
+[Dx, Dy] = AdelsonBergen.estimateOpticFlow2D(ImgSeq);
 warning(warning_state);
 
 % Contour captures horizontal motion energy
