@@ -36,10 +36,10 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'UrasEtAl',      'all'}};    % 10
               
 contour = [];
-for first_frame = 1:60
+for first_frame = 1:15
 
 % Load the image sequence.
-ImgSeq        = stream_our_stim(first_frame, 15, 'lab');
+ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
 maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 
 % if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
@@ -48,16 +48,16 @@ maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 
 warning_state = warning;
 warning('off', 'all');
-[Dx, Dy] = AdelsonBergen.estimateOpticFlow2D(ImgSeq);
+[Dx, Dy, ~] = Farnebaeck.estimateOpticFlow2D(ImgSeq);
 warning(warning_state);
 
 % Contour captures horizontal motion energy
 contour = [contour, mean(Dx(:))];
 
-% Display the estimated optic flow.
+% % Display the estimated optic flow.
 % h       = size(ImgSeq,1);
 % w       = size(ImgSeq,2);
-% [Y, X]   = ndgrid(1:h, 1:w); % pixel coordinates.
+% [Y, X]  = ndgrid(1:h, 1:w); % pixel coordinates.
 % sample  = 8;
 % IndexX  = 1:sample:w;
 % IndexY  = 1:sample:h;

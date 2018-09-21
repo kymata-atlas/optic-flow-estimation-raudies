@@ -7,17 +7,12 @@ function ImageSeq = stream_our_stim(starting_at, n_frames, image_mode)
     
     %% Persistent state
     
-    persistent w h; % Width and height of a single frame
     persistent f; % Number of frames in the data block
     persistent current_first_frame; % The index of the first frame
     persistent data_block;  % The w, h, t block of image data
     persistent use_lab;
     
     %% Initialise and validate persistent state
-    
-    if isempty(w)
-        [w, h, ~] = size(imread(filename_from_trial_and_frame(1, 1)));
-    end
     
     if isempty(f)
         f = n_frames;
