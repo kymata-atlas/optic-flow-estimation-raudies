@@ -32,7 +32,7 @@ function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
 %   Copyright (C) 2013  Florian Raudies, 01/02/2013, Boston University.
 %   License, GNU GPL, free software, without any warranty.
 
-% Set default values for paraemters of the method.
+% Set default values for parameters of the method.
 if nargin<2,                opt         = struct();     end % UNITS
 if ~isfield(opt,'fxy'),     opt.fxy     = 1/4;          end % cycles per pixel
 if ~isfield(opt,'oNum'),    opt.oNum    = 4;            end % -

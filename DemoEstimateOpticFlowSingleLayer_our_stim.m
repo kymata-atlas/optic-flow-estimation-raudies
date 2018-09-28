@@ -22,21 +22,21 @@ close all
 % more directions, etc. To avoid long runtimes and for educational reasons 
 % I kept the scripts rather simple. Thus, results give only a guideline as
 % to how good these methods are.
-algoIndex = 1; % Select the algorithm to run with this index.
-%                   Authors         frames        no
-AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
-                  {'Farnebaeck',    'all'}, ... % 2
-                  {'FleetJepson',   'all'}, ... % 3
-                  {'Heeger',        'all'}, ... % 4
-                  {'HornSchunck',   'two'}, ... % 5
-                  {'LucasKanade',   'two'}, ... % 6
-                  {'MotaEtAl',      'all'}, ... % 7
-                  {'Nagel',         'all'}, ... % 8
-                  {'OtteNagel',     'all'}, ... % 9
-                  {'UrasEtAl',      'all'}};    % 10
+% algoIndex = 1; % Select the algorithm to run with this index.
+% %                   Authors         frames        no
+% AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
+%                   {'Farnebaeck',    'all'}, ... % 2
+%                   {'FleetJepson',   'all'}, ... % 3
+%                   {'Heeger',        'all'}, ... % 4
+%                   {'HornSchunck',   'two'}, ... % 5
+%                   {'LucasKanade',   'two'}, ... % 6
+%                   {'MotaEtAl',      'all'}, ... % 7
+%                   {'Nagel',         'all'}, ... % 8
+%                   {'OtteNagel',     'all'}, ... % 9
+%                   {'UrasEtAl',      'all'}};    % 10
               
 contour = [];
-for first_frame = 1:15
+for first_frame = 1:50
 
 % Load the image sequence.
 ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
@@ -48,28 +48,36 @@ maxSpeed      = 3; % Set to a reasonable value, might not be correct.
 
 warning_state = warning;
 warning('off', 'all');
-[Dx, Dy, ~] = Farnebaeck.estimateOpticFlow2D(ImgSeq);
+opt.sigmaV = 5*10^-1;              % For Heeger
+opt.VelVecX = linspace(-3, 3, 45); % For Heeger
+opt.VelVecY = linspace(-3, 3, 15); % For Heeger
+[Dx, Dy, L] = Heeger.estimateOpticFlow2D(double(ImgSeq), opt);
 warning(warning_state);
 
 % Contour captures horizontal motion energy
-contour = [contour, mean(Dx(:))];
+% contour = [contour, nanmean(Dx(:))];
+% Use 99% trimmed mean to avoid absurdly large outliers
+contour = [contour, trimmean(Dx(~isnan(Dx)), 1)];
 
-% % Display the estimated optic flow.
-% h       = size(ImgSeq,1);
-% w       = size(ImgSeq,2);
-% [Y, X]  = ndgrid(1:h, 1:w); % pixel coordinates.
-% sample  = 8;
-% IndexX  = 1:sample:w;
-% IndexY  = 1:sample:h;
-% % For the display the flow is scaled by division with its maximum speed and
-% % multiplication with the sampling factor.
-% len     = sample/maxSpeed;
-% 
-% figure('Position',[50 50 600 600]);
-% quiver(X(IndexY,IndexX),      Y(IndexY,IndexX),...
-%        Dx(IndexY,IndexX)*len, Dy(IndexY,IndexX)*len,0,'-k');
-% axis equal ij; axis([-10 w+10 -10 h+10]);
-% title(sprintf(['Our stimulus, sampling %d times of ',...
-%     '%d x %d pixels.\nAlgorithm: %s'], sample,h,w,AlgoNameFrames{algoIndex}{1}));
+% Seltively show vecto field images by breaking here and executing the below
+continue;
+
+% Display the estimated optic flow.
+h       = size(ImgSeq,1);
+w       = size(ImgSeq,2);
+[Y, X]  = ndgrid(1:h, 1:w); % pixel coordinates.
+sample  = 8;
+IndexX  = 1:sample:w;
+IndexY  = 1:sample:h;
+% For the display the flow is scaled by division with its maximum speed and
+% multiplication with the sampling factor.
+len     = sample/maxSpeed;
+
+figure('Position',[50 50 600 600]);
+quiver(X(IndexY,IndexX),      Y(IndexY,IndexX),...
+       Dx(IndexY,IndexX)*len, Dy(IndexY,IndexX)*len,0,'-k');
+axis equal ij; axis([-10 w+10 -10 h+10]);
+title(sprintf(['Our stimulus, sampling %d times of ',...
+    '%d x %d pixels.'], sample,h,w));
 
 end
