@@ -1,4 +1,4 @@
-function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, L, averageModelEnergy] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -102,6 +102,9 @@ ImgSeq      = imfilter(imfilter(ImgSeq, LaplaceX, 'same', 'replicate'), ...
 % Compute the motion energy for spatial and temporal frequencies.
 % *************************************************************************
 L = zeros(yNum, xNum, vyNum, vxNum);  % likelihood values
+
+averageModelEnergies = zeros(oNum, 1);
+
 for iSpaceFreq = 1:oNum,
     ModelEnergy = zeros(vyNum, vxNum, ftNum);
     DataEnergy  = zeros(yNum,  xNum,  ftNum);
@@ -129,18 +132,22 @@ for iSpaceFreq = 1:oNum,
         % Compute the model energy.
         ModelEnergy(:,:,iTempFreq) = modelEnergy(Vx,Vy,fx0,fy0,ft0,...
                                                  sigmaX,sigmaY,sigmaT);
-    end
+    end % for iTempFreq
     % Compute normalization coefficients for all temporal frequencies of
     % one orientation.
     Rbar = repmat(squeeze(mean(DataEnergy,3)),[1 1 vyNum vxNum]);
     Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
     MbarDivRbar = Mbar./(Rbar+eps);
+
+    % The average of the model energy over the image frame and over temporal frequenfies
+    averageModelEnergies(iSpaceFreq) = mean(ModelEnergy(:));
+
     for iTempFreq = 1:ftNum,
         M = shiftdim(repmat(ModelEnergy(:,:,iTempFreq),[1 1 yNum xNum]),2);
         R = repmat(DataEnergy(:,:,iTempFreq),[1 1 vyNum vxNum]);
         L = L + (M-MbarDivRbar.*R).^2;
-    end
-end
+    end % for iTempFreq
+end % for iSpaceFreq
 % Parallel computation of motion velocities by sampling and max selection.
 L   = reshape(exp(-1/(2*sigmaV^2)*L),[yNum xNum vyNum*vxNum]);
 [~, Index] = max(L,[],3);
@@ -153,6 +160,8 @@ Dy  = Vy(Index);
 % Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;
 % Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;
 L   = reshape(L,[yNum xNum vyNum vxNum]);
+
+averageModelEnergy = mean(averageModelEnergies(:));
 
 
 function ImgSeq = filterSepGabor(ImgSeq, Gabor)
