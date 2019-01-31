@@ -1,4 +1,4 @@
-function [Dx, Dy, L, modelEnergies] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, L, dataEnergies] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -140,7 +140,7 @@ for iSpaceFreq = 1:oNum,
     Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
     MbarDivRbar = Mbar./(Rbar+eps);
 
-    modelEnergies(:, :, : iTempFreq, iSpaceFreq) = ModelEnergy;
+    dataEnergies(:, :, : iTempFreq, iSpaceFreq) = DataEnergy;
 
     for iTempFreq = 1:ftNum,
         M = shiftdim(repmat(ModelEnergy(:, :, iTempFreq), [1, 1, yNum, xNum]), 2);
