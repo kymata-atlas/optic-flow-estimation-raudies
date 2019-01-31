@@ -16,22 +16,19 @@ addpath('./../'); % add root directory to path to access auxiliary functions.
 opt.h       = 128; % set parameters for stimulus.
 opt.w       = 128;
 opt.fNum    = 15;
-% opt.omega   = pi/300;
-% [ImgSeq maxSpeed] = randomTextureRotation(opt);
 opt.expRate = 1.005;
-% [ImgSeq maxSpeed] = randomTextureExpansion(opt);
 ImgSeq = readImgSeq('./../TransTreeNew/ImgFrame%05d.pgm',0,14);
 maxSpeed = 5; % Set to a reasonable value, might not be correct.
 rmpath('./../');
 
 % Set parameters for estimation method.
 opt.sigmaV = 5*10^-1;
-[Dx Dy L] = Heeger.estimateOpticFlow2D(ImgSeq,opt);
+[Dx, Dy, L, E] = Heeger.estimateOpticFlow2D(ImgSeq, opt);
 
 % Display the estimated optic flow.
 h       = size(ImgSeq,1);
 w       = size(ImgSeq,2);
-[Y X]   = ndgrid(1:h, 1:w); % pixel coordinates.
+[Y, X]   = ndgrid(1:h, 1:w); % pixel coordinates.
 sample  = 8;
 IndexX  = 1:sample:w;
 IndexY  = 1:sample:h; 

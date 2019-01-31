@@ -1,4 +1,4 @@
-function [Dx, Dy, L, averageModelEnergy] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, L, modelEnergies] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -38,11 +38,11 @@ if ~isfield(opt,'fxy'),     opt.fxy     = 1/4;          end % cycles per pixel
 if ~isfield(opt,'oNum'),    opt.oNum    = 4;            end % -
 if ~isfield(opt,'sigmaX'),  opt.sigmaX  = 4;            end % pixels
 if ~isfield(opt,'sigmaY'),  opt.sigmaY  = 4;            end % pixels
-if ~isfield(opt,'TempFrq'), opt.TempFrq = [-1/4 0 1/4]; end % cycles per frame
+if ~isfield(opt,'TempFrq'), opt.TempFrq = [-1/4, 0, 1/4]; end % cycles per frame
 if ~isfield(opt,'sigmaT'),  opt.sigmaT  = 1;            end % frames
 if ~isfield(opt,'sigmaV'),  opt.sigmaV  = 10^-1;        end % -
-if ~isfield(opt,'VelVecX'), opt.VelVecX = linspace(-1,1,15); end % pixels per frame
-if ~isfield(opt,'VelVecY'), opt.VelVecY = linspace(-1,1,15); end % pixels per frame
+if ~isfield(opt,'VelVecX'), opt.VelVecX = linspace(-1, 1, 15); end % pixels per frame
+if ~isfield(opt,'VelVecY'), opt.VelVecY = linspace(-1, 1, 15); end % pixels per frame
 % Retrieve parameter values.
 fxy     = opt.fxy;
 oNum    = opt.oNum;
@@ -54,7 +54,8 @@ sigmaV  = opt.sigmaV;
 VelVecX = opt.VelVecX;
 VelVecY = opt.VelVecY;
 SpaceOri= (0:oNum-1)*pi/oNum;
-[Vy, Vx] = ndgrid(VelVecY,VelVecX);
+% each of Vy and Vx are sized length(VelVecY) x length(velVecX) (eg 16x16)
+[Vy, Vx] = ndgrid(VelVecY, VelVecX);
 yNum    = size(ImgSeq,1);
 xNum    = size(ImgSeq,2);
 ftNum   = length(TempFrq);
@@ -103,7 +104,7 @@ ImgSeq      = imfilter(imfilter(ImgSeq, LaplaceX, 'same', 'replicate'), ...
 % *************************************************************************
 L = zeros(yNum, xNum, vyNum, vxNum);  % likelihood values
 
-averageModelEnergies = zeros(oNum, 1);
+modelEnergies = zeros(vyNum, vxNum, ftNum, oNum);
 
 for iSpaceFreq = 1:oNum,
     ModelEnergy = zeros(vyNum, vxNum, ftNum);
@@ -123,15 +124,15 @@ for iSpaceFreq = 1:oNum,
         Gabor.CosT = reshape(fGaborCos(KernelT,ft0,sigmaT), [1 1 ktNum]);
         % Compute Gabor filter output and power.
         FilterEnergy = abs(filterSepGabor(ImgSeq, Gabor)).^2;
-        % Approximate Parseval's theorem by filtering with binomial kernel.
+        % Approximate Parseval`s theorem by filtering with binomial kernel.
         DataEnergy(:,:,iTempFreq) = 1/(8*pi^3) ...
                                 *imfilter(imfilter(convn(FilterEnergy, ...
                                     WindowT, 'valid'), ...
                                     WindowX, 'same', 'replicate'), ...
                                     WindowY, 'same', 'replicate');
         % Compute the model energy.
-        ModelEnergy(:,:,iTempFreq) = modelEnergy(Vx,Vy,fx0,fy0,ft0,...
-                                                 sigmaX,sigmaY,sigmaT);
+        % ModelEnergy is sized vyNum x vxNum x ftNum
+        ModelEnergy(:, :, iTempFreq) = modelEnergy(Vx, Vy, fx0, fy0, ft0, sigmaX, sigmaY, sigmaT);
     end % for iTempFreq
     % Compute normalization coefficients for all temporal frequencies of
     % one orientation.
@@ -139,51 +140,53 @@ for iSpaceFreq = 1:oNum,
     Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
     MbarDivRbar = Mbar./(Rbar+eps);
 
-    % The average of the model energy over the image frame and over temporal frequenfies
-    averageModelEnergies(iSpaceFreq) = mean(ModelEnergy(:));
+    modelEnergies(:, :, : iTempFreq, iSpaceFreq) = ModelEnergy;
 
     for iTempFreq = 1:ftNum,
-        M = shiftdim(repmat(ModelEnergy(:,:,iTempFreq),[1 1 yNum xNum]),2);
-        R = repmat(DataEnergy(:,:,iTempFreq),[1 1 vyNum vxNum]);
+        M = shiftdim(repmat(ModelEnergy(:, :, iTempFreq), [1, 1, yNum, xNum]), 2);
+        R = repmat(DataEnergy(:, :, iTempFreq), [1, 1, vyNum, vxNum]);
         L = L + (M-MbarDivRbar.*R).^2;
     end % for iTempFreq
 end % for iSpaceFreq
 % Parallel computation of motion velocities by sampling and max selection.
-L   = reshape(exp(-1/(2*sigmaV^2)*L),[yNum xNum vyNum*vxNum]);
+L   = reshape(exp(-1/(2*sigmaV^2)*L), [yNum, xNum, vyNum*vxNum]);
 [~, Index] = max(L,[],3);
-Vx  = reshape(Vx,[vyNum*vxNum 1]);
-Vy  = reshape(Vy,[vyNum*vxNum 1]);
+Vx  = reshape(Vx, [vyNum * vxNum, 1]);
+Vy  = reshape(Vy, [vyNum * vxNum, 1]);
 Dx  = Vx(Index);
 Dy  = Vy(Index);
 % Another read-out computes the likelihood weighted vector sum.
 % Lsum = sum(L,3) + eps;
 % Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;
 % Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;
-L   = reshape(L,[yNum xNum vyNum vxNum]);
 
-averageModelEnergy = mean(averageModelEnergies(:));
+L   = reshape(L, [yNum, xNum, vyNum, vxNum]);
 
 
 function ImgSeq = filterSepGabor(ImgSeq, Gabor)
-% Calculate 3D separable Gabor filter results.
-GaborSinT = convn(ImgSeq, -Gabor.SinT, 'valid'); % '-' for convn
-GaborCosT = convn(ImgSeq, +Gabor.CosT, 'valid');
-GaborSinTCosX = imfilter(GaborSinT, Gabor.CosX, 'same', 'replicate');
-GaborSinTSinX = imfilter(GaborSinT, Gabor.SinX, 'same', 'replicate');
-GaborCosTSinX = imfilter(GaborCosT, Gabor.SinX, 'same', 'replicate');
-GaborCosTCosX = imfilter(GaborCosT, Gabor.CosX, 'same', 'replicate');
-ImgSeq  = imfilter(GaborCosTCosX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborCosTSinX, Gabor.SinY, 'same', 'replicate') ...
-        - imfilter(GaborSinTSinX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborSinTCosX, Gabor.SinY, 'same', 'replicate') ...
-        + 1i...
-        *(imfilter(GaborSinTCosX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborSinTSinX, Gabor.SinY, 'same', 'replicate') ...
-        + imfilter(GaborCosTSinX, Gabor.CosY, 'same', 'replicate') ...
-        + imfilter(GaborCosTCosX, Gabor.SinY, 'same', 'replicate'));
+	% Calculate 3D separable Gabor filter results.
+	GaborSinT = convn(ImgSeq, -Gabor.SinT, 'valid'); % '-' for convn
+	GaborCosT = convn(ImgSeq, +Gabor.CosT, 'valid');
+	GaborSinTCosX = imfilter(GaborSinT, Gabor.CosX, 'same', 'replicate');
+	GaborSinTSinX = imfilter(GaborSinT, Gabor.SinX, 'same', 'replicate');
+	GaborCosTSinX = imfilter(GaborCosT, Gabor.SinX, 'same', 'replicate');
+	GaborCosTCosX = imfilter(GaborCosT, Gabor.CosX, 'same', 'replicate');
+	ImgSeq  = imfilter(GaborCosTCosX, Gabor.CosY, 'same', 'replicate') ...
+	        - imfilter(GaborCosTSinX, Gabor.SinY, 'same', 'replicate') ...
+	        - imfilter(GaborSinTSinX, Gabor.CosY, 'same', 'replicate') ...
+	        - imfilter(GaborSinTCosX, Gabor.SinY, 'same', 'replicate') ...
+	        + 1i...
+	        *(imfilter(GaborSinTCosX, Gabor.CosY, 'same', 'replicate') ...
+	        - imfilter(GaborSinTSinX, Gabor.SinY, 'same', 'replicate') ...
+	        + imfilter(GaborCosTSinX, Gabor.CosY, 'same', 'replicate') ...
+	        + imfilter(GaborCosTCosX, Gabor.SinY, 'same', 'replicate'));
 
 function Energy = modelEnergy(U,V, fx0,fy0,ft0, sigmaX,sigmaY,sigmaT)
-% Model for motion energy, implements Eq. (9) from Heeger (1988).
-H2 = (U*fx0 + V*fy0 + ft0).^2;
-H3 = (U*sigmaX*sigmaT).^2 + (V*sigmaY*sigmaT).^2 + (sigmaX*sigmaY)^2;
-Energy = exp(-4*pi^2*sigmaX^2*sigmaY^2*sigmaT^2 * H2./H3);
+	% Model for motion energy, implements Eq. (9) from Heeger (1988)
+
+	% Same size as U and V, which are each sized by the number of velocities in x and y direction
+	H2 = (U*fx0 + V*fy0 + ft0).^2;
+	H3 = (U*sigmaX*sigmaT).^2 + (V*sigmaY*sigmaT).^2 + (sigmaX*sigmaY)^2;
+
+	% same size as H2 and H3
+	Energy = exp(-4 * pi^2 * sigmaX^2 * sigmaY^2 * sigmaT^2 * H2 ./ H3);
