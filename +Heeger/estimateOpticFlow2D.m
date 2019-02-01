@@ -104,7 +104,7 @@ ImgSeq      = imfilter(imfilter(ImgSeq, LaplaceX, 'same', 'replicate'), ...
 % *************************************************************************
 L = zeros(yNum, xNum, vyNum, vxNum);  % likelihood values
 
-modelEnergies = zeros(vyNum, vxNum, ftNum, oNum);
+dataEnergies = zeros(yNum, xNum, ftNum, oNum);
 
 for iSpaceFreq = 1:oNum,
     ModelEnergy = zeros(vyNum, vxNum, ftNum);
@@ -140,7 +140,7 @@ for iSpaceFreq = 1:oNum,
     Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
     MbarDivRbar = Mbar./(Rbar+eps);
 
-    dataEnergies(:, :, : iTempFreq, iSpaceFreq) = DataEnergy;
+    dataEnergies(:, :, :, iSpaceFreq) = DataEnergy;
 
     for iTempFreq = 1:ftNum,
         M = shiftdim(repmat(ModelEnergy(:, :, iTempFreq), [1, 1, yNum, xNum]), 2);
