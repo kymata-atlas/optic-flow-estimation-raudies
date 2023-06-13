@@ -1,18 +1,18 @@
 function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
-%   ImgSeq  - Image sequence as a cube with dimensions: 
+%   ImgSeq  - Image sequence as a cube with dimensions:
 %             height x width x frames.
 %   opt     - Struture with options:
-%             * W        - Weight matrix for sums constraints in the local 
+%             * W        - Weight matrix for sums constraints in the local
 %                          neighborhood to build the structure tensor.
 %             * DiffX    - Kernel that approximtes the computation of the
 %                          partial derivative in x.
 %             * DiffY    - Ditto for y.
 %             * DiffT    - Ditto for t.
-%             * eta      - Regulates the smoothness constraint. A larger 
+%             * eta      - Regulates the smoothness constraint. A larger
 %                          eta results in an increased smoothness.
-%             * omega    - Parameter for the successive over relaxation 
-%                          (SOR) method, which is used to solve the sparse 
+%             * omega    - Parameter for the successive over relaxation
+%                          (SOR) method, which is used to solve the sparse
 %                          linear equation system. 0 <= omega <= 2.
 %             * iNum     - Number of iterations for the SOR method.
 %             * showFlow - If showFlow=1, then the flow per iteration is
@@ -25,13 +25,13 @@ function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
 %             thus, Dx and Dy have dimensions: height x width x frames-1.
 %
 % DESCRIPTION
-%   A modern implementation of the idea of 
-%   Horn, B.K.P. and Schunck, B.G. (1981). Determining optical flow. 
+%   A modern implementation of the idea of
+%   Horn, B.K.P. and Schunck, B.G. (1981). Determining optical flow.
 %       Artificial Intelligence 17, 185-203.
 %   The discretization and implementation follows:
-%   Bruhn, A., Weickert, J. Kohlberger, T., and Schnörr, C. (2006). A 
-%       multigrid platform for real-time motion computation with 
-%       discontinuity preserving variational methods. International 
+%   Bruhn, A., Weickert, J. Kohlberger, T., and Schnï¿½rr, C. (2006). A
+%       multigrid platform for real-time motion computation with
+%       discontinuity preserving variational methods. International
 %       Journal of Computer Vision 70(3), 257-277.
 %
 %   Copyright (C) 2013  Florian Raudies, 01/02/2013, Boston University.
@@ -58,7 +58,7 @@ iNum        = opt.iNum;
 showFlow    = opt.showFlow;
 % Check if the provided sequence contains at least two frames.
 [yNum xNum tNum] = size(ImgSeq);
-if tNum<2, 
+if tNum<2,
     error('MATLAB:frameErr', ['This method requires at least %d frames ',...
         'but only %d frames were provided!'], 2, tNum);
 end
@@ -122,7 +122,7 @@ if tNum==1,
         Dx(:,1) = Dx(:,2);    Dx(:,xNum) = Dx(:,xNum-1);
         Dy(1,:) = Dy(2,:);    Dy(yNum,:) = Dy(yNum-1,:);
         Dy(:,1) = Dy(:,2);    Dy(:,xNum) = Dy(:,xNum-1);
-        
+
         % Optionally, display the estimated flow of the current iteration.
         if showFlow, plotFlow(Dx,Dy,iter,iNum); end
     end
@@ -153,11 +153,11 @@ else
         end
         Dx = copyBoundary(Dx, 1);
         Dy = copyBoundary(Dy, 1);
-        
+
         % Optionally, display the estimated flow (1st frame) of the current iteration.
-        if showFlow, plotFlow(Dx(IndexY,IndexX,1),Dy(IndexY,IndexX,1),iter,iNum); end    
+        if showFlow, plotFlow(Dx(IndexY,IndexX,1),Dy(IndexY,IndexX,1),iter,iNum); end
     end
-end    
+end
 Dx = eliminateBoundary(Dx, 1);
 Dy = eliminateBoundary(Dy, 1);
 
@@ -175,4 +175,4 @@ function plotFlow(Dx, Dy, iter, iNum)
     title(sprintf('Iteration %d of %d.',iter,iNum));
     axis ij equal; axis([-10 xNum+10 -10 yNum+10]);
     drawnow;
-    
+
