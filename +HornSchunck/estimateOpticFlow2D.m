@@ -1,5 +1,5 @@
-function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
-% estimateOpticFlow2D
+function [Dx, Dy] = estimateOpticFlow2D(ImgSeq, opt)
+% estimateOpticFlow2D (Horn & Schunck)
 %   ImgSeq  - Image sequence as a cube with dimensions:
 %             height x width x frames.
 %   opt     - Struture with options:
@@ -29,7 +29,7 @@ function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
 %   Horn, B.K.P. and Schunck, B.G. (1981). Determining optical flow.
 %       Artificial Intelligence 17, 185-203.
 %   The discretization and implementation follows:
-%   Bruhn, A., Weickert, J. Kohlberger, T., and Schn�rr, C. (2006). A
+%   Bruhn, A., Weickert, J. Kohlberger, T., and Schnörr, C. (2006). A
 %       multigrid platform for real-time motion computation with
 %       discontinuity preserving variational methods. International
 %       Journal of Computer Vision 70(3), 257-277.
@@ -38,34 +38,38 @@ function [Dx Dy] = estimateOpticFlow2D(ImgSeq, opt)
 %   License, GNU GPL, free software, without any warranty.
 
 % Set default values for paraemters of the method.
-if nargin<2,                opt         = struct();                     end
-if ~isfield(opt,'W'),       opt.W       = fspecial('gaussian',[9 9],2); end
-if ~isfield(opt,'DiffX'),   opt.DiffX   = [-1 8 0 -8 1]/12;             end
-if ~isfield(opt,'DiffY'),   opt.DiffY   = opt.DiffX';                   end
-if ~isfield(opt,'DiffT'),   opt.DiffT   = reshape([-1 1],[1 1 2]);      end
-if ~isfield(opt,'eta'),     opt.eta     = 1/255;                        end
-if ~isfield(opt,'omega'),   opt.omega   = 1.5;                          end
-if ~isfield(opt,'iNum'),    opt.iNum    = 50;                           end
-if ~isfield(opt,'showFlow'),opt.showFlow= 1;                            end
+if nargin < 2,              opt          = struct();                      end
+if ~isfield(opt,'W'),       opt.W        = fspecial('gaussian',[9, 9],2); end
+if ~isfield(opt,'DiffX'),   opt.DiffX    = [-1, 8, 0, -8, 1]/12;          end
+if ~isfield(opt,'DiffY'),   opt.DiffY    = opt.DiffX';                    end
+if ~isfield(opt,'DiffT'),   opt.DiffT    = reshape([-1, 1], [1, 1, 2]);   end
+if ~isfield(opt,'eta'),     opt.eta      = 1/255;                         end
+if ~isfield(opt,'omega'),   opt.omega    = 1.5;                           end
+if ~isfield(opt,'iNum'),    opt.iNum     = 50;                            end
+if ~isfield(opt,'showFlow'),opt.showFlow = 1;                             end
+
 % Retreive default parmeters to be saved in their own variables.
-W           = opt.W;
-DiffX       = opt.DiffX;
-DiffY       = opt.DiffY;
-DiffT       = opt.DiffT;
-eta         = opt.eta;
-omega       = opt.omega;
-iNum        = opt.iNum;
-showFlow    = opt.showFlow;
+W        = opt.W;
+DiffX    = opt.DiffX;
+DiffY    = opt.DiffY;
+DiffT    = opt.DiffT;
+eta      = opt.eta;
+omega    = opt.omega;
+iNum     = opt.iNum;
+showFlow = opt.showFlow;
+
 % Check if the provided sequence contains at least two frames.
-[yNum xNum tNum] = size(ImgSeq);
-if tNum<2,
+[yNum, xNum, tNum] = size(ImgSeq);
+if tNum < 2,
     error('MATLAB:frameErr', ['This method requires at least %d frames ',...
         'but only %d frames were provided!'], 2, tNum);
 end
+
 % Compute the partial derivatives in x, y, and t.
 ImgSeqDx = imfilter(ImgSeq, DiffX, 'same', 'replicate');
 ImgSeqDy = imfilter(ImgSeq, DiffY, 'same', 'replicate');
 ImgSeqDt = convn(ImgSeq, DiffT, 'valid');
+
 % Select the spatial and temporal valid part of the partial derivatives.
 ktNum    = size(DiffT,3);
 ValidT   = (1+floor((ktNum-1)/2)) : (tNum-floor(ktNum/2));
@@ -74,6 +78,7 @@ ImgSeqDy = squeeze(ImgSeqDy(:,:,ValidT));
 tNum     = length(ValidT);
 Dx       = squeeze(zeros(yNum, xNum, tNum));
 Dy       = squeeze(zeros(yNum, xNum, tNum));
+
 % Compute the coefficients A, B, C, D, E, and F of the structure tensor
 %     / A B C \
 % J = | B D E |
@@ -84,6 +89,7 @@ C = imfilter(ImgSeqDx.*ImgSeqDt,W, 'same', 'replicate');
 D = imfilter(ImgSeqDy.*ImgSeqDy,W, 'same', 'replicate');
 E = imfilter(ImgSeqDy.*ImgSeqDt,W, 'same', 'replicate');
 % F = imfilter(ImgSeqDt.*ImgSeqDt,W, 'same', 'replicate'); % not used.
+
 % Repeat boundary values by 1.
 A   = repeatBoundary(A, 1);
 B   = repeatBoundary(B, 1);
@@ -96,10 +102,11 @@ yNum    = yNum + 2;
 xNum    = xNum + 2;
 IndexY  = 2 : (yNum-1);
 IndexX  = 2 : (xNum-1);
+
 % *************************************************************************
 % Compute 2D optic flow.
 % *************************************************************************
-if tNum==1,
+if tNum == 1,
     for iter = 1:iNum,
         for iy = IndexY,
             for ix = IndexX,
@@ -113,8 +120,8 @@ if tNum==1,
                               +Dy(iy,ix-1) + Dy(iy,ix+1) ...
                               -1/eta*(B(iy,ix)*Dx(iy,ix) + E(iy,ix))) ...
                              /(1/eta*D(iy,ix) + 4);
-            end
-        end
+            end % for ix
+        end % for iy
         % Dx = copyBoundary(Dx, kNum);
         % Dy = copyBoundary(Dy, kNum);
         % Use the faster, direct way to copy boundary values.
@@ -125,14 +132,15 @@ if tNum==1,
 
         % Optionally, display the estimated flow of the current iteration.
         if showFlow, plotFlow(Dx,Dy,iter,iNum); end
-    end
+    end % for iter
+
 % *************************************************************************
 % Compute 3D optic flow.
 % *************************************************************************
 else
     tNum    = tNum + 2;
     IndexT  = 2 : tNum-1;
-    for iter = 1:iNum,
+    for iter = 1 : iNum,
         for iy = IndexY,
             for ix = IndexX,
                 for it = IndexT,
@@ -148,31 +156,36 @@ else
                                   +Dy(iy,ix,it-1) + Dy(iy,ix,it+1) ...
                                   -1/eta*(B(iy,ix,it)*Dx(iy,ix,it) + E(iy,ix,it))) ...
                                  /(1/eta*D(iy,ix,it) + 6);
-                end
-            end
-        end
+                end % for it
+            end % for ix
+        end % for iy
         Dx = copyBoundary(Dx, 1);
         Dy = copyBoundary(Dy, 1);
 
         % Optionally, display the estimated flow (1st frame) of the current iteration.
         if showFlow, plotFlow(Dx(IndexY,IndexX,1),Dy(IndexY,IndexX,1),iter,iNum); end
-    end
-end
+    end % for iter
+end  % if tNum
+
 Dx = eliminateBoundary(Dx, 1);
 Dy = eliminateBoundary(Dy, 1);
+
+end % function
 
 
 function plotFlow(Dx, Dy, iter, iNum)
     cla;
-    [yNum xNum] = size(Dx);
-    [Y X]   = ndgrid(1:yNum, 1:xNum);
+    [yNum, xNum] = size(Dx);
+    [Y, X]  = ndgrid(1:yNum, 1:xNum);
     sample  = ceil(yNum/45);
     IndexY  = 1:sample:yNum;
     IndexX  = 1:sample:xNum;
     scale   = sample*2;
-    quiver(X(IndexY,IndexX),Y(IndexY,IndexX),...
-           scale*Dx(IndexY,IndexX),scale*Dy(IndexY,IndexX),0,'-k');
+    quiver(X(IndexY,IndexX),Y(IndexY, IndexX), ...
+           scale*Dx(IndexY,IndexX),scale*Dy(IndexY, IndexX), 0, '-k');
     title(sprintf('Iteration %d of %d.',iter,iNum));
-    axis ij equal; axis([-10 xNum+10 -10 yNum+10]);
+    axis ij equal; axis([-10, xNum+10, -10, yNum+10]);
     drawnow;
+
+  end % function
 

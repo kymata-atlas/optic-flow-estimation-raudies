@@ -9,17 +9,17 @@ close all
 % compute estimation errors. For a comprehensive evaluation of optic flow
 % methods see http://vision.middlebury.edu/flow/eval/.
 % For the evaluation of these algorithms I created another image sequence
-% "TranslationSphere" because known benchmark sequences typically do not 
+% "TranslationSphere" because known benchmark sequences typically do not
 % provide enough frames for all methods.
 %
 % Attention: This script may take tens of seconds to finish!
-% 
+%
 %   Copyright (C) 2013  Florian Raudies, 05/16/2013, Boston University.
 %   License, GNU GPL, free software, without any warranty.
 % *************************************************************************
 
 % Some algorithms would require more mechanisms to detect multiple speeds,
-% more directions, etc. To avoid long runtimes and for educational reasons 
+% more directions, etc. To avoid long runtimes and for educational reasons
 % I kept the scripts rather simple. Thus, results give only a guideline as
 % to how good these methods are.
 % algoIndex = 1; % Select the algorithm to run with this index.
@@ -40,7 +40,7 @@ for first_frame = 1:50
 
 % Load the image sequence.
 ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
-maxSpeed      = 3; % Set to a reasonable value, might not be correct.
+maxSpeed      = 3; % Set to a reasonable value
 
 % if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
 %     ImgSeq = ImgSeq(:,:,11:12);
@@ -59,7 +59,7 @@ warning(warning_state);
 % Use 99% trimmed mean to avoid absurdly large outliers
 contour = [contour, trimmean(Dx(~isnan(Dx)), 1)];
 
-% Seltively show vecto field images by breaking here and executing the below
+% Seltively show vector field images by breaking here and executing the below
 continue;
 
 % Display the estimated optic flow.
@@ -80,4 +80,4 @@ axis equal ij; axis([-10 w+10 -10 h+10]);
 title(sprintf(['Our stimulus, sampling %d times of ',...
     '%d x %d pixels.'], sample,h,w));
 
-end
+end % for first_frame
