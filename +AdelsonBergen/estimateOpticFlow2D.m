@@ -1,4 +1,4 @@
-function [Dx, Dy] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, or_me_plus, or_me_minus, op_me] = estimateOpticFlow2D(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -94,15 +94,27 @@ end
 % Normalization over orientations.
 R1 = R1./(eps + repmat(mean(abs(R1),3),[1 1 oNum]));
 R2 = R2./(eps + repmat(mean(abs(R2),3),[1 1 oNum]));
-% Calculate opponent motion energy.
-E = 4*(real(R1).*imag(R2) - real(R2).*imag(R1));
+% Separable responses
+% All sized (yNum, xNum, oNum)
+A = real(R1);
+A_ = imag(R1);
+B = real(R2);
+B_ = imag(R2);
+% Calculate oriented motion energy
+% Sized (yNum, xNum, oNum)
+or_me_plus = (A+B_).^2 + (A_-B).^2
+or_me_minus= (A-B_).^2 + (A_+B).^2
+% Calculate opponent motion energy
+% (after simplifying expression, rather than as direct subtraction of above).
+% Sized (yNum, xNum, oNum)
+op_me = 4*(A.*B_ - A_.*B);
 % Negative sign encodes the opposite direction.
-E = max(cat(3, -E, E),0);
+op_me = max(cat(3, -op_me, op_me),0);
 % Define prototopye motion vectors Vx and Vy.
 Vx = cos([Ori pi+Ori]);
 Vy = sin([Ori pi+Ori]);
 % Return vector corresponding to maximum motion energy.
-[~, Index] = max(E,[],3);
+[~, Index] = max(op_me,[],3);
 Dx = Vx(Index);
 Dy = Vy(Index);
 
