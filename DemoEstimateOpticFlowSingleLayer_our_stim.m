@@ -22,19 +22,19 @@ close all
 % more directions, etc. To avoid long runtimes and for educational reasons
 % I kept the scripts rather simple. Thus, results give only a guideline as
 % to how good these methods are.
-% algoIndex = 1; % Select the algorithm to run with this index.
-% %                   Authors         frames        no
-% AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
-%                   {'Farnebaeck',    'all'}, ... % 2
-%                   {'FleetJepson',   'all'}, ... % 3
-%                   {'Heeger',        'all'}, ... % 4
-%                   {'HornSchunck',   'two'}, ... % 5
-%                   {'LucasKanade',   'two'}, ... % 6
-%                   {'MotaEtAl',      'all'}, ... % 7
-%                   {'Nagel',         'all'}, ... % 8
-%                   {'OtteNagel',     'all'}, ... % 9
-%                   {'UrasEtAl',      'all'}};    % 10
-              
+algoIndex = 5; % Select the algorithm to run with this index.
+%                   Authors         frames        no
+AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
+                  {'Farnebaeck',    'all'}, ... % 2
+                  {'FleetJepson',   'all'}, ... % 3
+                  {'Heeger',        'all'}, ... % 4
+                  {'HornSchunck',   'two'}, ... % 5
+                  {'LucasKanade',   'two'}, ... % 6
+                  {'MotaEtAl',      'all'}, ... % 7
+                  {'Nagel',         'all'}, ... % 8
+                  {'OtteNagel',     'all'}, ... % 9
+                  {'UrasEtAl',      'all'}};    % 10
+
 contour = [];
 for first_frame = 1:50
 
@@ -42,16 +42,19 @@ for first_frame = 1:50
 ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
 maxSpeed      = 3; % Set to a reasonable value
 
-% if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
-%     ImgSeq = ImgSeq(:,:,11:12);
-% end
+if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
+    ImgSeq = ImgSeq(:,:,11:12);
+end
 
 warning_state = warning;
 warning('off', 'all');
-opt.sigmaV = 5*10^-1;              % For Heeger
-opt.VelVecX = linspace(-3, 3, 45); % For Heeger
-opt.VelVecY = linspace(-3, 3, 15); % For Heeger
-[Dx, Dy, L] = Heeger.estimateOpticFlow2D(double(ImgSeq), opt);
+opt = struct();
+if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger"),
+  opt.sigmaV = 5*10^-1;
+  opt.VelVecX = linspace(-3, 3, 45);
+  opt.VelVecY = linspace(-3, 3, 15);
+  [Dx, Dy, L] = Heeger.estimateOpticFlow2D(double(ImgSeq), opt);
+end % if algo
 warning(warning_state);
 
 % Contour captures horizontal motion energy
