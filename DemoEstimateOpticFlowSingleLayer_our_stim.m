@@ -54,6 +54,8 @@ if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger"),
   opt.VelVecX = linspace(-3, 3, 45);
   opt.VelVecY = linspace(-3, 3, 15);
   [Dx, Dy, L] = Heeger.estimateOpticFlow2D(double(ImgSeq), opt);
+elseif strcmpi(AlgoNameFrames{algoIndex}{1}, "FleetJepson"),
+  [Dx, Dy] = FleetJepson.estimateOpticFlow2D(ImgSeq, opt);
 end % if algo
 warning(warning_state);
 
