@@ -91,13 +91,13 @@ E = imfilter(ImgSeqDy.*ImgSeqDt,W, 'same', 'replicate');
 % F = imfilter(ImgSeqDt.*ImgSeqDt,W, 'same', 'replicate'); % not used.
 
 % Repeat boundary values by 1.
-A   = repeatBoundary(A, 1);
-B   = repeatBoundary(B, 1);
-C   = repeatBoundary(C, 1);
-D   = repeatBoundary(D, 1);
-E   = repeatBoundary(E, 1);
-Dx  = repeatBoundary(Dx, 1);
-Dy  = repeatBoundary(Dy, 1);
+A   = HornSchunck.repeatBoundary(A, 1);
+B   = HornSchunck.repeatBoundary(B, 1);
+C   = HornSchunck.repeatBoundary(C, 1);
+D   = HornSchunck.repeatBoundary(D, 1);
+E   = HornSchunck.repeatBoundary(E, 1);
+Dx  = HornSchunck.repeatBoundary(Dx, 1);
+Dy  = HornSchunck.repeatBoundary(Dy, 1);
 yNum    = yNum + 2;
 xNum    = xNum + 2;
 IndexY  = 2 : (yNum-1);
@@ -167,8 +167,8 @@ else
     end % for iter
 end  % if tNum
 
-Dx = eliminateBoundary(Dx, 1);
-Dy = eliminateBoundary(Dy, 1);
+Dx = HornSchunck.eliminateBoundary(Dx, 1);
+Dy = HornSchunck.eliminateBoundary(Dy, 1);
 
 end % function
 
