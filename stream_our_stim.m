@@ -112,6 +112,6 @@ function [trial_i, frame_i] = get_trial_and_frame_from_overall_frame(overall_fra
 end
 
 function filename = filename_from_trial_and_frame(trial, frame)
-    base_dir = '/Users/cai/Box Sync/Kymata/KYMATA-visual-stimuli-dataset-3_01/video_stimuli_trials';
+    base_dir = '/Users/cai/Dox/Work/UCL Kymata lab/Data/KYMATA-visual-stimuli-dataset-3_01/video_stimuli_trials';
     filename = fullfile(base_dir, sprintf('trial_%03d', trial), sprintf('frame%02d.png', frame));
 end
