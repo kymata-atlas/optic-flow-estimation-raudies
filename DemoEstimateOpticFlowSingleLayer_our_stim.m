@@ -49,7 +49,7 @@ elseif strcmpi(AlgoNameFrames{algoIndex}{1}, "HornSchunck")
   nStreamFrames = 2;
 end % if algo
 
-nFrames = 2400;%60;
+nFrames = 24000;%60;
 contour = nan(1, nFrames);
 for first_frame = 1:nFrames
 
