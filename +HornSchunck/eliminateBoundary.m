@@ -1,7 +1,7 @@
 function X = eliminateBoundary(X, len)
 % eliminateBoundary
 %   X       - nD matrix.
-%   len     - 'len' is eliminated from both boundaries for all 
+%   len     - 'len' is eliminated from both boundaries for all
 %             non-singleton dimensions.
 %
 % RETURN
@@ -23,3 +23,4 @@ for id = 1:n,
     end
 end
 X = X(idx{:});
+

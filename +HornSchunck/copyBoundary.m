@@ -4,8 +4,8 @@ function X = copyBoundary(X, len)
 %   len     - Length of boundary which should be repeated.
 %
 % RETURN
-%   X       - Output matrix (n-d), where len values are copied into the 
-%             matrix 
+%   X       - Output matrix (n-d), where len values are copied into the
+%             matrix
 %             * position (len+1) for the left boundary
 %             * position (end-len) for the right boundary.
 %             Unlike the function repeatBoundary here a boundary defined
@@ -27,3 +27,4 @@ for id = 1:n,
     end
 end
 X = X(idx{:});
+

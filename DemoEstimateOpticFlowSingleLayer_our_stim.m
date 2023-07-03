@@ -1,6 +1,6 @@
-clc
-clear all
-close all
+clc;
+clear all;
+close all;
 
 % *************************************************************************
 % Estimation of optic flow for the image sequence "Translation Sphere".
@@ -36,31 +36,50 @@ AlgoNameFrames = {{'AdelsonBergen', 'all'}, ... % 1
                   {'UrasEtAl',      'all'}};    % 10
 
 contour = [];
-for first_frame = 1:50
+
+opt = struct();
+if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger")
+  opt.sigmaV = 5*10^-1;
+  opt.VelVecX = linspace(-3, 3, 45);
+  opt.VelVecY = linspace(-3, 3, 15);
+  nStreamFrames = 15;
+elseif strcmpi(AlgoNameFrames{algoIndex}{1}, "HornSchunck")
+  opt.iNum = 15;
+  opt.showFlow = 0;
+  nStreamFrames = 2;
+end % if algo
+
+nFrames = 24000;%60;
+contour = nan(1, nFrames);
+for first_frame = 1:nFrames
 
 % Load the image sequence.
-ImgSeq        = stream_our_stim(first_frame, 15, 'greyscale');
+ImgSeq        = stream_our_stim(first_frame, nStreamFrames, 'greyscale');
 maxSpeed      = 3; % Set to a reasonable value
 
-if strcmp(AlgoNameFrames{algoIndex}{2},'two'),
-    ImgSeq = ImgSeq(:,:,11:12);
+% Ensure frame buffer full
+if strcmp(AlgoNameFrames{algoIndex}{2},'two')
+    buffer_size = size(ImgSeq, 3);
+    if (buffer_size < 2)
+        continue;
+    else
+        assert(buffer_size == 2);
+    end
 end
 
 warning_state = warning;
 warning('off', 'all');
-opt = struct();
-if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger"),
-  opt.sigmaV = 5*10^-1;
-  opt.VelVecX = linspace(-3, 3, 45);
-  opt.VelVecY = linspace(-3, 3, 15);
+if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger")
   [Dx, Dy, L] = Heeger.estimateOpticFlow2D(double(ImgSeq), opt);
+elseif strcmpi(AlgoNameFrames{algoIndex}{1}, "HornSchunck")
+  [Dx, Dy] = HornSchunck.estimateOpticFlow2D(double(ImgSeq), opt);
 end % if algo
 warning(warning_state);
 
 % Contour captures horizontal motion energy
 % contour = [contour, nanmean(Dx(:))];
 % Use 99% trimmed mean to avoid absurdly large outliers
-contour = [contour, trimmean(Dx(~isnan(Dx)), 1)];
+contour(first_frame) = trimmean(Dx(~isnan(Dx)), 1);
 
 % Seltively show vector field images by breaking here and executing the below
 continue;

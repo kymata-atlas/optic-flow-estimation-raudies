@@ -4,7 +4,7 @@ function X = repeatBoundary(X, len)
 %   len     - Length of boundary which should be repeated.
 %
 % RETURN
-%   X       - nD matrix, whereas all non-singelton dimensions are enlarged 
+%   X       - nD matrix, whereas all non-singelton dimensions are enlarged
 %             by 2*len.
 %
 %   Copyright (C) 2013  Florian Raudies, 01/02/2013, Boston University.
@@ -22,3 +22,4 @@ for id = 1:n,
     end
 end
 X = X(idx{:});
+

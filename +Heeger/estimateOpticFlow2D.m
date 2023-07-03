@@ -1,13 +1,13 @@
 function [Dx, Dy, L, dataEnergies] = estimateOpticFlow2D(ImgSeq, opt)
-% estimateOpticFlow2D
-%   ImgSeq  - Image sequence as a cube with dimensions: 
+% estimateOpticFlow2D (Heeger)
+%   ImgSeq  - Image sequence as a cube with dimensions:
 %             height x width x frames.
 %   opt     - Structure with options:
 %             * fxy     - Spatial frequency in cycles per pixel.
 %             * oNum    - Number of orientations in space.
 %             * sigmaX  - Gaussian standard deviation of Gabor in x.
 %             * sigmaY  - Gaussian standard deviation of Gabor in y.
-%             * TempFrq - Temporal frequency vector in cycles per frame. 
+%             * TempFrq - Temporal frequency vector in cycles per frame.
 %             * sigmaT  - Gaussian standard deviation of Gabor in t.
 %             * sigmaV  - Standard deviation for Gaussian distribution
 %                         function that is used to compute likelihoods.
@@ -19,12 +19,12 @@ function [Dx, Dy, L, dataEnergies] = estimateOpticFlow2D(ImgSeq, opt)
 %   Dy      - Y-component of optic flow.
 %             Computes the optic flow for the center frame of the sequence,
 %             thus, Dx and Dy have dimensions: height x width.
-%   L       - Likelihood values for sampled velocity space. 
+%   L       - Likelihood values for sampled velocity space.
 %             Dimensions: height x width x vyNum x vxNum.
 %
 % DESCRIPTION
-%   An implementation of the idea of 
-%   Heeger, D.J. (1988). Optical flow using spatiotemporal filters. 
+%   An implementation of the idea of
+%   Heeger, D.J. (1988). Optical flow using spatiotemporal filters.
 %       International Journal of Computer Vision 1(4), 279-302.
 %   This implementation does not realize multiple levels using an image
 %   pyramid.
@@ -62,8 +62,8 @@ ftNum   = length(TempFrq);
 vyNum   = size(Vy,1);
 vxNum   = size(Vy,2);
 % *************************************************************************
-% Generate Gabor filter kernels for separable filtering. 
-%   See Heeger, D. (1987). Model for the extraction of image flow. 
+% Generate Gabor filter kernels for separable filtering.
+%   See Heeger, D. (1987). Model for the extraction of image flow.
 %       Journal of Optical Society, Series A, 4(8), 1455-1471.
 % *************************************************************************
 fKernel     = @(sigma)      (-3*sigma:+1:+3*sigma);
@@ -83,7 +83,7 @@ WindowT     = reshape(Binomi8, [1 1 9]);
 wtNum       = length(Binomi8);
 % Check if the provided sequence contains enough frames.
 tNum    = size(ImgSeq,3);
-if tNum<(ktNum+wtNum-1), 
+if tNum<(ktNum+wtNum-1),
     error('MATLAB:frameErr', ['This method requires at least %d frames ',...
         'but only %d frames were provided!'], ktNum+wtNum-1, tNum);
 end
