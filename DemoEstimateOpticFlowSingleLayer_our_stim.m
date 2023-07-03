@@ -1,6 +1,4 @@
-clc;
 clear all;
-close all;
 
 % *************************************************************************
 % Estimation of optic flow for the image sequence "Translation Sphere".

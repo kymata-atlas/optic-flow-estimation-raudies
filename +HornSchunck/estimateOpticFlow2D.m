@@ -60,7 +60,7 @@ showFlow = opt.showFlow;
 
 % Check if the provided sequence contains at least two frames.
 [yNum, xNum, tNum] = size(ImgSeq);
-if tNum < 2,
+if tNum < 2
     error('MATLAB:frameErr', ['This method requires at least %d frames ',...
         'but only %d frames were provided!'], 2, tNum);
 end
@@ -106,10 +106,10 @@ IndexX  = 2 : (xNum-1);
 % *************************************************************************
 % Compute 2D optic flow.
 % *************************************************************************
-if tNum == 1,
-    for iter = 1:iNum,
-        for iy = IndexY,
-            for ix = IndexX,
+if tNum == 1
+    for iter = 1:iNum
+        for iy = IndexY
+            for ix = IndexX
                 Dx(iy,ix) = (1-omega) * Dx(iy,ix) ...
                     + omega * (Dx(iy-1,ix) + Dx(iy+1,ix)...
                               +Dx(iy,ix-1) + Dx(iy,ix+1)...
@@ -140,10 +140,10 @@ if tNum == 1,
 else
     tNum    = tNum + 2;
     IndexT  = 2 : tNum-1;
-    for iter = 1 : iNum,
-        for iy = IndexY,
-            for ix = IndexX,
-                for it = IndexT,
+    for iter = 1 : iNum
+        for iy = IndexY
+            for ix = IndexX
+                for it = IndexT
                     Dx(iy,ix,it) = (1-omega) * Dx(iy,ix,it) ...
                         + omega * (Dx(iy-1,ix,it) + Dx(iy+1,ix,it) ...
                                   +Dx(iy,ix-1,it) + Dx(iy,ix+1,it) ...
