@@ -37,14 +37,14 @@ contour = [];
 
 opt = struct();
 if strcmpi(AlgoNameFrames{algoIndex}{1}, "Heeger")
+  nStreamFrames = 15;
   opt.sigmaV = 5*10^-1;
   opt.VelVecX = linspace(-3, 3, 45);
   opt.VelVecY = linspace(-3, 3, 15);
-  nStreamFrames = 15;
 elseif strcmpi(AlgoNameFrames{algoIndex}{1}, "HornSchunck")
+  nStreamFrames = 2;
   opt.iNum = 15;
   opt.showFlow = 0;
-  nStreamFrames = 2;
 end % if algo
 
 nFrames = 24000;%60;
