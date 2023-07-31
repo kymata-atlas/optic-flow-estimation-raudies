@@ -33,16 +33,22 @@ function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
 %   License, GNU GPL, free software, without any warranty.
 
 % Set default values for parameters of the method.
-if nargin<2,                opt         = struct();     end % UNITS
-if ~isfield(opt,'fxy'),     opt.fxy     = 1/4;          end % cycles per pixel      %20
-if ~isfield(opt,'oNum'),    opt.oNum    = 4;            end % -                      %4
-if ~isfield(opt,'sigmaX'),  opt.sigmaX  = 4;            end % pixels                 %4
-if ~isfield(opt,'sigmaY'),  opt.sigmaY  = 4;            end % pixels                 %4
-if ~isfield(opt,'TempFrq'), opt.TempFrq = [-1/4 0 1/4]; end % cycles per frame       %3-4
-if ~isfield(opt,'sigmaT'),  opt.sigmaT  = 1;            end % frames
-if ~isfield(opt,'sigmaV'),  opt.sigmaV  = 10^-1;        end % -                       %null
-if ~isfield(opt,'VelVecX'), opt.VelVecX = linspace(-1,1,15); end % pixels per frame
-if ~isfield(opt,'VelVecY'), opt.VelVecY = linspace(-1,1,15); end % pixels per frame   %15
+
+clear
+first_frame = 6;
+
+ImgSeq        = double(stream_our_stim(first_frame, 15, 'greyscale'));
+% Set default values for parameters of the method.
+opt         = struct();      % UNITS
+opt.fxy     = 1/10;           % cycles per pixel
+opt.oNum    = 4;             % -
+opt.sigmaX  = 4;             % pixels
+opt.sigmaY  = 4;             % pixels
+opt.TempFrq = [-1/4 0 1/4];  % cycles per frame
+opt.sigmaT  = 1;             % frames
+opt.sigmaV  = 5*10^-1;         % -
+opt.VelVecX = linspace(-1,1,15); % pixels per frame
+opt.VelVecY = linspace(-1,1,15); % pixels per frame
 % Retrieve parameter values.
 fxy     = opt.fxy;
 oNum    = opt.oNum;
@@ -150,33 +156,25 @@ Vx  = reshape(Vx,[vyNum*vxNum 1]);
 Vy  = reshape(Vy,[vyNum*vxNum 1]);
 Dx  = Vx(Index);
 Dy  = Vy(Index);
+
 %Another read-out computes the likelihood weighted vector sum.
-Lsum = sum(L,3) + eps;%
-Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;%
-Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;%
+%Lsum = sum(L,3) + eps;
+%Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;
+%Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;
 L   = reshape(L,[yNum xNum vyNum vxNum]);
 
 
-function ImgSeq = filterSepGabor(ImgSeq, Gabor)
-% Calculate 3D separable Gabor filter results.
-GaborSinT = convn(ImgSeq, -Gabor.SinT, 'valid'); % '-' for convn
-GaborCosT = convn(ImgSeq, +Gabor.CosT, 'valid');
-GaborSinTCosX = imfilter(GaborSinT, Gabor.CosX, 'same', 'replicate');
-GaborSinTSinX = imfilter(GaborSinT, Gabor.SinX, 'same', 'replicate');
-GaborCosTSinX = imfilter(GaborCosT, Gabor.SinX, 'same', 'replicate');
-GaborCosTCosX = imfilter(GaborCosT, Gabor.CosX, 'same', 'replicate');
-ImgSeq  = imfilter(GaborCosTCosX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborCosTSinX, Gabor.SinY, 'same', 'replicate') ...
-        - imfilter(GaborSinTSinX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborSinTCosX, Gabor.SinY, 'same', 'replicate') ...
-        + 1i...
-        *(imfilter(GaborSinTCosX, Gabor.CosY, 'same', 'replicate') ...
-        - imfilter(GaborSinTSinX, Gabor.SinY, 'same', 'replicate') ...
-        + imfilter(GaborCosTSinX, Gabor.CosY, 'same', 'replicate') ...
-        + imfilter(GaborCosTCosX, Gabor.SinY, 'same', 'replicate'));
+imagesc(Dx);
+title(sprintf(['Heeger, default settings, frame ', num2str(first_frame)]))
+map = [1 0 0
+       0.75 0 0
+       0.5 0 0
+       0.25 0 0
+       0 0 0
+       0 0.25 0
+       0 0.5 0
+       0 0.75 0
+       0 1 0 ];
+colormap(map)
+caxis([-1 1])
 
-function Energy = modelEnergy(U,V, fx0,fy0,ft0, sigmaX,sigmaY,sigmaT)
-% Model for motion energy, implements Eq. (9) from Heeger (1988).
-H2 = (U*fx0 + V*fy0 + ft0).^2;
-H3 = (U*sigmaX*sigmaT).^2 + (V*sigmaY*sigmaT).^2 + (sigmaX*sigmaY)^2;
-Energy = exp(-4*pi^2*sigmaX^2*sigmaY^2*sigmaT^2 * H2./H3);

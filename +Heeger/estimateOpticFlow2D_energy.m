@@ -1,4 +1,4 @@
-function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
+function [dataEnergies] = estimateOpticFlow2D_energy(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -34,15 +34,15 @@ function [Dx, Dy, L] = estimateOpticFlow2D(ImgSeq, opt)
 
 % Set default values for parameters of the method.
 if nargin<2,                opt         = struct();     end % UNITS
-if ~isfield(opt,'fxy'),     opt.fxy     = 1/4;          end % cycles per pixel      %20
-if ~isfield(opt,'oNum'),    opt.oNum    = 4;            end % -                      %4
-if ~isfield(opt,'sigmaX'),  opt.sigmaX  = 4;            end % pixels                 %4
-if ~isfield(opt,'sigmaY'),  opt.sigmaY  = 4;            end % pixels                 %4
-if ~isfield(opt,'TempFrq'), opt.TempFrq = [-1/4 0 1/4]; end % cycles per frame       %3-4
+if ~isfield(opt,'fxy'),     opt.fxy     = 1/4;          end % cycles per pixel
+if ~isfield(opt,'oNum'),    opt.oNum    = 4;            end % -
+if ~isfield(opt,'sigmaX'),  opt.sigmaX  = 4;            end % pixels
+if ~isfield(opt,'sigmaY'),  opt.sigmaY  = 4;            end % pixels
+if ~isfield(opt,'TempFrq'), opt.TempFrq = [-1/4 0 1/4]; end % cycles per frame
 if ~isfield(opt,'sigmaT'),  opt.sigmaT  = 1;            end % frames
-if ~isfield(opt,'sigmaV'),  opt.sigmaV  = 10^-1;        end % -                       %null
+if ~isfield(opt,'sigmaV'),  opt.sigmaV  = 10^-1;        end % -
 if ~isfield(opt,'VelVecX'), opt.VelVecX = linspace(-1,1,15); end % pixels per frame
-if ~isfield(opt,'VelVecY'), opt.VelVecY = linspace(-1,1,15); end % pixels per frame   %15
+if ~isfield(opt,'VelVecY'), opt.VelVecY = linspace(-1,1,15); end % pixels per frame
 % Retrieve parameter values.
 fxy     = opt.fxy;
 oNum    = opt.oNum;
@@ -93,18 +93,20 @@ ImgSeq  = ImgSeq(:,:,SelT);
 % *************************************************************************
 % Laplacian spatial filtering to remove DC component from image sequence.
 % *************************************************************************
-%Laplace     = [1 -2 1];
-%LaplaceY    = reshape(Laplace, [3 1 1]);
-%LaplaceX    = reshape(Laplace, [1 3 1]);
-%ImgSeq      = imfilter(imfilter(ImgSeq, LaplaceX, 'same', 'replicate'), ...
+% Laplace     = [1 -2 1];
+% LaplaceY    = reshape(Laplace, [3 1 1]);
+% LaplaceX    = reshape(Laplace, [1 3 1]);
+% ImgSeq      = imfilter(imfilter(ImgSeq, LaplaceX, 'same', 'replicate'), ...
 %                                        LaplaceY, 'same', 'replicate');
 % *************************************************************************
 % Compute the motion energy for spatial and temporal frequencies.
 % *************************************************************************
-L = zeros(yNum, xNum, vyNum, vxNum);  % likelihood values
+%L = zeros(yNum, xNum, vyNum, vxNum);  % likelihood values
+
+dataEnergies = zeros(yNum, xNum, ftNum, oNum);
+
 for iSpaceFreq = 1:oNum,
-    disp(['iSpaceFreq: ', num2str(iSpaceFreq)]);
-    ModelEnergy = zeros(vyNum, vxNum, ftNum);
+    %ModelEnergy = zeros(vyNum, vxNum, ftNum);
     DataEnergy  = zeros(yNum,  xNum,  ftNum);
     % Define spatial frequencies.
     fx0 = cos(SpaceOri(iSpaceFreq))*fxy;
@@ -115,7 +117,6 @@ for iSpaceFreq = 1:oNum,
     Gabor.SinY = reshape(fGaborSin(KernelY,fy0,sigmaY), [kyNum 1 1]);
     Gabor.CosY = reshape(fGaborCos(KernelY,fy0,sigmaY), [kyNum 1 1]);
     for iTempFreq = 1:ftNum,
-        disp(['iTempFreq: ', num2str(iTempFreq)]);
         ft0 = TempFrq(iTempFreq);
         % Define temporal part of Gabor filters.
         Gabor.SinT = reshape(fGaborSin(KernelT,ft0,sigmaT), [1 1 ktNum]);
@@ -129,32 +130,36 @@ for iSpaceFreq = 1:oNum,
                                     WindowX, 'same', 'replicate'), ...
                                     WindowY, 'same', 'replicate');
         % Compute the model energy.
-        ModelEnergy(:,:,iTempFreq) = modelEnergy(Vx,Vy,fx0,fy0,ft0,...
-                                                 sigmaX,sigmaY,sigmaT);
-    end
+        %ModelEnergy(:,:,iTempFreq) = modelEnergy(Vx,Vy,fx0,fy0,ft0,...
+        %                                         sigmaX,sigmaY,sigmaT);
+    end % for iTempFreq
     % Compute normalization coefficients for all temporal frequencies of
     % one orientation.
-    Rbar = repmat(squeeze(mean(DataEnergy,3)),[1 1 vyNum vxNum]);
-    Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
-    MbarDivRbar = Mbar./(Rbar+eps);
-    for iTempFreq = 1:ftNum,
-        M = shiftdim(repmat(ModelEnergy(:,:,iTempFreq),[1 1 yNum xNum]),2);
-        R = repmat(DataEnergy(:,:,iTempFreq),[1 1 vyNum vxNum]);
-        L = L + (M-MbarDivRbar.*R).^2;
-    end
-end
+    %Rbar = repmat(squeeze(mean(DataEnergy,3)),[1 1 vyNum vxNum]);
+    %Mbar = shiftdim(repmat(squeeze(mean(ModelEnergy,3)),[1 1 yNum xNum]),2);
+    %MbarDivRbar = Mbar./(Rbar+eps);
+
+    % The average of the model energy over the image frame and over temporal frequenfies
+    dataEnergies(:, :, :, iSpaceFreq) = DataEnergy;
+
+    %for iTempFreq = 1:ftNum
+    %    M = shiftdim(repmat(ModelEnergy(:,:,iTempFreq),[1 1 yNum xNum]),2);
+    %    R = repmat(DataEnergy(:,:,iTempFreq),[1 1 vyNum vxNum]);
+    %    L = L + (M-MbarDivRbar.*R).^2;
+    %end % for iTempFreq
+end % for iSpaceFreq
 % Parallel computation of motion velocities by sampling and max selection.
-L   = reshape(exp(-1/(2*sigmaV^2)*L),[yNum xNum vyNum*vxNum]);
-[~, Index] = max(L,[],3);
-Vx  = reshape(Vx,[vyNum*vxNum 1]);
-Vy  = reshape(Vy,[vyNum*vxNum 1]);
-Dx  = Vx(Index);
-Dy  = Vy(Index);
-%Another read-out computes the likelihood weighted vector sum.
-Lsum = sum(L,3) + eps;%
-Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;%
-Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;%
-L   = reshape(L,[yNum xNum vyNum vxNum]);
+%L   = reshape(exp(-1/(2*sigmaV^2)*L),[yNum xNum vyNum*vxNum]);
+%[~, Index] = max(L,[],3);
+%Vx  = reshape(Vx,[vyNum*vxNum 1]);
+%Vy  = reshape(Vy,[vyNum*vxNum 1]);
+%Dx  = Vx(Index);
+%Dy  = Vy(Index);
+% Another read-out computes the likelihood weighted vector sum.
+% Lsum = sum(L,3) + eps;
+% Dx = sum(L.*shiftdim(repmat(Vx(:),[1 yNum xNum]),1),3)./Lsum;
+% Dy = sum(L.*shiftdim(repmat(Vy(:),[1 yNum xNum]),1),3)./Lsum;
+%L   = reshape(L,[yNum xNum vyNum vxNum]);
 
 
 function ImgSeq = filterSepGabor(ImgSeq, Gabor)

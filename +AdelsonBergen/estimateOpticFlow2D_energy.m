@@ -1,4 +1,4 @@
-function [Dx, Dy, OME_Left, OME_Right] = estimateOpticFlow2D(ImgSeq, opt)
+function [Dx, Dy, or_me_plus, or_me_minus, op_me] = estimateOpticFlow2D_energy(ImgSeq, opt)
 % estimateOpticFlow2D
 %   ImgSeq  - Image sequence as a cube with dimensions: 
 %             height x width x frames.
@@ -35,13 +35,13 @@ function [Dx, Dy, OME_Left, OME_Right] = estimateOpticFlow2D(ImgSeq, opt)
 
 % Set default values for paraemters of the method.
 if nargin<2,                opt         = struct(); end
-if ~isfield(opt,'k'),       opt.k       = 0.3;      end %0.4
-if ~isfield(opt,'htNum'),   opt.htNum   = 10;       end
+if ~isfield(opt,'k'),       opt.k       = 0.1;      end
+if ~isfield(opt,'htNum'),   opt.htNum   = 15;       end
 if ~isfield(opt,'n1'),      opt.n1      = 3;        end
 if ~isfield(opt,'n2'),      opt.n2      = 5;        end
-if ~isfield(opt,'oNum'),    opt.oNum    = 4;        end  %4
-if ~isfield(opt,'f'),       opt.f       = 1/14;      end % cycles per pixel      %1/15
-if ~isfield(opt,'sigma'),   opt.sigma   = 7;        end % pixels                %4
+if ~isfield(opt,'oNum'),    opt.oNum    = 8;        end
+if ~isfield(opt,'f'),       opt.f       = 1/4;      end % cycles per pixel
+if ~isfield(opt,'sigma'),   opt.sigma   = 4;        end % pixels
 % Retrieve parameter values.
 k       = opt.k;
 htNum   = opt.htNum;
@@ -94,18 +94,27 @@ end
 % Normalization over orientations.
 R1 = R1./(eps + repmat(mean(abs(R1),3),[1 1 oNum]));
 R2 = R2./(eps + repmat(mean(abs(R2),3),[1 1 oNum]));
-% % Calculate Orientated Motion Energy
-% OME_Left  = real(R1).*imag(R2);
-% OME_Right = real(R2).*imag(R1);
-% Calculate opponent motion energy.
-E = 4*(real(R1).*imag(R2) - real(R2).*imag(R1));
+% Separable responses
+% All sized (yNum, xNum, oNum)
+A = real(R1);
+A_ = imag(R1);
+B = real(R2);
+B_ = imag(R2);
+% Calculate oriented motion energy
+% Sized (yNum, xNum, oNum)
+or_me_plus  = (A+B_).^2 + (A_-B).^2;
+or_me_minus = (A-B_).^2 + (A_+B).^2;
+% Calculate opponent motion energy
+% (after simplifying expression, rather than as direct subtraction of above).
+% Sized (yNum, xNum, oNum)
+op_me = 4*(A.*B_ - A_.*B);
 % Negative sign encodes the opposite direction.
-E = max(cat(3, -E, E),0);
+op_me = max(cat(3, -op_me, op_me),0);
 % Define prototopye motion vectors Vx and Vy.
 Vx = cos([Ori pi+Ori]);
 Vy = sin([Ori pi+Ori]);
 % Return vector corresponding to maximum motion energy.
-[~, Index] = max(E,[],3);
+[~, Index] = max(op_me,[],3);
 Dx = Vx(Index);
 Dy = Vy(Index);
 
